@@ -57,15 +57,11 @@ pub enum Channel {
 }
 
 impl Channel {
-
-    /////////////////////////////////////////////////////////////////////////
-    // Adapter for each variant
-    /////////////////////////////////////////////////////////////////////////
-
     /// Converts from `Channel` to `Option<Arc<RwLock<Group>>>`.
     ///
     /// Converts `self` into an `Option<Arc<RwLock<Group>>>`, consuming `self`,
-    /// and discarding a GuildChannel, PrivateChannel, or ChannelCategory, if any.
+    /// and discarding a `GuildChannel`, `PrivateChannel`, or `ChannelCategory`,
+    /// if any.
     ///
     /// # Examples
     ///
@@ -73,9 +69,13 @@ impl Channel {
     ///
     /// ```rust,no_run
     /// # extern crate serenity;
+    /// #
     /// # use self::serenity::model::id::ChannelId;
+    /// #
+    /// # #[cfg(feature = "model")]
     /// # fn main() {
-    /// # let channel = ChannelId(0).get().unwrap();
+    /// #     let channel = ChannelId(0).get().unwrap();
+    /// #
     /// match channel.group() {
     ///     Some(group_lock) => {
     ///         if let Some(ref name) = group_lock.read().name {
@@ -86,10 +86,12 @@ impl Channel {
     ///     },
     ///     None => { println!("It's not a group!"); },
     /// }
+    /// #
     /// # }
+    /// #
+    /// # #[cfg(not(feature = "model"))]
+    /// fn main() {}
     /// ```
-
-
     pub fn group(self) -> Option<Arc<RwLock<Group>>> {
         match self {
             Channel::Group(lock) => Some(lock),
@@ -99,8 +101,9 @@ impl Channel {
 
     /// Converts from `Channel` to `Option<Arc<RwLock<GuildChannel>>>`.
     ///
-    /// Converts `self` into an `Option<Arc<RwLock<GuildChannel>>>`, consuming `self`,
-    /// and discarding a Group, PrivateChannel, or ChannelCategory, if any.
+    /// Converts `self` into an `Option<Arc<RwLock<GuildChannel>>>`, consuming
+    /// `self`, and discarding a `Group`, `PrivateChannel`, or
+    /// `ChannelCategory`, if any.
     ///
     /// # Examples
     ///
@@ -108,18 +111,25 @@ impl Channel {
     ///
     /// ```rust,no_run
     /// # extern crate serenity;
+    /// #
     /// # use self::serenity::model::id::ChannelId;
+    /// #
+    /// # #[cfg(feature = "model")]
     /// # fn main() {
-    /// let channel = ChannelId(0).get().unwrap();
+    /// #     let channel = ChannelId(0).get().unwrap();
+    /// #
     /// match channel.guild() {
     ///     Some(guild_lock) => {
     ///         println!("It's a guild named {}!", guild_lock.read().name);
     ///     },
     ///     None => { println!("It's not a guild!"); },
     /// }
+    /// #
     /// # }
+    /// #
+    /// # #[cfg(not(feature = "model"))]
+    /// fn main() {}
     /// ```
-
     pub fn guild(self) -> Option<Arc<RwLock<GuildChannel>>> {
         match self {
             Channel::Guild(lock) => Some(lock),
@@ -129,8 +139,9 @@ impl Channel {
 
     /// Converts from `Channel` to `Option<Arc<RwLock<PrivateChannel>>>`.
     ///
-    /// Converts `self` into an `Option<Arc<RwLock<PrivateChannel>>>`, consuming `self`,
-    /// and discarding a Group, GuildChannel, or ChannelCategory, if any.
+    /// Converts `self` into an `Option<Arc<RwLock<PrivateChannel>>>`, consuming
+    /// `self`, and discarding a `Group`, `GuildChannel`, or `ChannelCategory`,
+    /// if any.
     ///
     /// # Examples
     ///
@@ -138,9 +149,13 @@ impl Channel {
     ///
     /// ```rust,no_run
     /// # extern crate serenity;
+    /// #
     /// # use self::serenity::model::id::ChannelId;
+    /// #
+    /// # #[cfg(feature = "model")]
     /// # fn main() {
-    /// # let channel = ChannelId(0).get().unwrap();
+    /// #     let channel = ChannelId(0).get().unwrap();
+    /// #
     /// match channel.private() {
     ///     Some(private_lock) => {
     ///         let private = private_lock.read();
@@ -150,9 +165,12 @@ impl Channel {
     ///     },
     ///     None => { println!("It's not a private channel!"); },
     /// }
+    /// #
     /// # }
+    /// #
+    /// # #[cfg(not(feature = "model"))]
+    /// fn main() {}
     /// ```
-
     pub fn private(self) -> Option<Arc<RwLock<PrivateChannel>>> {
         match self {
             Channel::Private(lock) => Some(lock),
@@ -162,8 +180,9 @@ impl Channel {
 
     /// Converts from `Channel` to `Option<Arc<RwLock<ChannelCategory>>>`.
     ///
-    /// Converts `self` into an `Option<Arc<RwLock<ChannelCategory>>>`, consuming `self`,
-    /// and discarding a Group, GuildChannel, or PrivateChannel, if any.
+    /// Converts `self` into an `Option<Arc<RwLock<ChannelCategory>>>`,
+    /// consuming `self`, and discarding a `Group`, `GuildChannel`, or
+    /// `PrivateChannel`, if any.
     ///
     /// # Examples
     ///
@@ -171,18 +190,25 @@ impl Channel {
     ///
     /// ```rust,no_run
     /// # extern crate serenity;
+    /// #
     /// # use self::serenity::model::id::ChannelId;
+    /// #
+    /// # #[cfg(feature = "model")]
     /// # fn main() {
     /// # let channel = ChannelId(0).get().unwrap();
+    /// #
     /// match channel.category() {
     ///     Some(category_lock) => {
     ///         println!("It's a category named {}!", category_lock.read().name);
     ///     },
     ///     None => { println!("It's not a category!"); },
     /// }
+    /// #
     /// # }
+    /// #
+    /// # #[cfg(not(feature = "model"))]
+    /// fn main() {}
     /// ```
-
     pub fn category(self) -> Option<Arc<RwLock<ChannelCategory>>> {
         match self {
             Channel::Category(lock) => Some(lock),
@@ -680,8 +706,8 @@ pub enum PermissionOverwriteType {
 
 #[cfg(test)]
 mod test {
-    #[cfg(feature = "utils")]
-    mod utils {
+    #[cfg(all(feature = "model", feature = "utils"))]
+    mod model_utils {
         use model::prelude::*;
         use parking_lot::RwLock;
         use std::collections::HashMap;
