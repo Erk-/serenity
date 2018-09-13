@@ -34,7 +34,7 @@ use std::mem;
 /// [`Channel`]: ../channel/enum.Channel.html
 /// [`Group`]: ../channel/struct.Group.html
 /// [`Guild`]: ../guild/struct.Guild.html
-/// [`PrivateChannel`]: ../struct.PrivateChannel.html
+/// [`PrivateChannel`]: ../channel/struct.PrivateChannel.html
 #[derive(Clone, Debug)]
 pub struct ChannelCreateEvent {
     /// The channel that was created.
@@ -148,8 +148,7 @@ impl CacheUpdate for ChannelDeleteEvent {
 
                 cache.categories.remove(&channel_id);
             },
-            // We ignore these two due to the fact that the delete event for dms/groups
-            // will _not_ fire anymore.
+            // We ignore these because the delete event does not fire for these.
             Channel::Private(_) | Channel::Group(_) => unreachable!(),
         };
 
@@ -848,41 +847,48 @@ pub struct MessageUpdateEvent {
 
 #[cfg(feature = "cache")]
 impl CacheUpdate for MessageUpdateEvent {
-    type Output = ();
+    type Output = Message;
 
     fn update(&mut self, cache: &mut Cache) -> Option<Self::Output> {
-        let messages = cache.messages.get_mut(&self.channel_id)?;
-        let message = messages.get_mut(&self.id)?;
+        if let Some(messages) = cache.messages.get_mut(&self.channel_id) {
+            if let Some(message) = messages.get_mut(&self.id) {
+                let item = message.clone();
 
-        if let Some(attachments) = self.attachments.clone() {
-            message.attachments = attachments;
+                if let Some(attachments) = self.attachments.clone() {
+                    message.attachments = attachments;
+                }
+
+                if let Some(content) = self.content.clone() {
+                    message.content = content;
+                }
+
+                if let Some(edited_timestamp) = self.edited_timestamp {
+                    message.edited_timestamp = Some(edited_timestamp);
+                }
+
+                if let Some(mentions) = self.mentions.clone() {
+                    message.mentions = mentions;
+                }
+
+                if let Some(mention_everyone) = self.mention_everyone {
+                    message.mention_everyone = mention_everyone;
+                }
+
+                if let Some(mention_roles) = self.mention_roles.clone() {
+                    message.mention_roles = mention_roles;
+                }
+
+                if let Some(pinned) = self.pinned {
+                    message.pinned = pinned;
+                }
+
+                Some(item)
+            } else {
+                None
+            }
+        } else {
+            None
         }
-
-        if let Some(content) = self.content.clone() {
-            message.content = content;
-        }
-
-        if let Some(edited_timestamp) = self.edited_timestamp {
-            message.edited_timestamp = Some(edited_timestamp);
-        }
-
-        if let Some(mentions) = self.mentions.clone() {
-            message.mentions = mentions;
-        }
-
-        if let Some(mention_everyone) = self.mention_everyone {
-            message.mention_everyone = mention_everyone;
-        }
-
-        if let Some(mention_roles) = self.mention_roles.clone() {
-            message.mention_roles = mention_roles;
-        }
-
-        if let Some(pinned) = self.pinned {
-            message.pinned = pinned;
-        }
-
-        None
     }
 }
 
@@ -1343,16 +1349,14 @@ pub enum Event {
     /// Fires the [`Client::channel_delete`] event.
     ///
     /// [`Channel`]: ../channel/enum.Channel.html
-    /// [`Client::channel_delete`]:
-    /// ../../client/struct.Client.html#channel_delete
+    /// [`Client::channel_delete`]: ../../client/struct.Client.html#channel_delete
     ChannelDelete(ChannelDeleteEvent),
     /// The pins for a [`Channel`] have been updated.
     ///
     /// Fires the [`Client::channel_pins_update`] event.
     ///
     /// [`Channel`]: ../channel/enum.Channel.html
-    /// [`Client::channel_pins_update`]:
-    /// ../../client/struct.Client.html#channel_pins_update
+    /// [`Client::channel_pins_update`]: ../../client/struct.Client.html#channel_pins_update
     ChannelPinsUpdate(ChannelPinsUpdateEvent),
     /// A [`User`] has been added to a [`Group`].
     ///
@@ -1415,8 +1419,7 @@ pub enum Event {
     ///
     /// Fires the [`reaction_remove`] event handler.
     ///
-    /// [`reaction_remove`]:
-    /// ../../prelude/trait.EventHandler.html#method.reaction_remove
+    /// [`reaction_remove`]: ../../prelude/trait.EventHandler.html#method.reaction_remove
     ReactionRemove(ReactionRemoveEvent),
     /// A request was issued to remove all [`Reaction`]s from a [`Message`].
     ///

@@ -64,9 +64,9 @@ impl<'a> Request<'a> {
     pub fn build(&'a self) -> HyperRequestBuilder<'a> {
         let Request {
             body,
-            headers: request_headers,
-            route: route_info,
-        } = self;
+            headers: ref request_headers,
+            route: ref route_info,
+        } = *self;
         let (method, _, path) = route_info.deconstruct();
 
         let mut builder = CLIENT.request(
@@ -74,7 +74,7 @@ impl<'a> Request<'a> {
             &path.into_owned(),
         );
 
-        if let Some(bytes) = body {
+        if let Some(ref bytes) = body {
             builder = builder.body(Body::BufBody(bytes, bytes.len()));
         }
 
