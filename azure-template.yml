@@ -13,15 +13,13 @@ jobs:
   steps: 
   - bash: |
       if [[ "$OS" == "xcode9-macos10.13" ]]; then 
-        HOMEBREW_NO_AUTO_UPDATE=1 sudo brew install libsodium --HEAD
-        sudo ldconfig
-      else
-        git clone 'git://github.com/jedisct1/libsodium.git'
-        cd libsodium
-        ./autogen.sh
-        ./configure && make
-        sudo make install
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install libtool autoconf automake
       fi
+      git clone 'git://github.com/jedisct1/libsodium.git'
+      cd libsodium
+      ./autogen.sh
+      ./configure && make
+      sudo make install
 
   - bash: |
       curl -o rustup-init.sh https://sh.rustup.rs -sSf
