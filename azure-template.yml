@@ -13,10 +13,11 @@ jobs:
   steps: 
   - bash: |
       if [[ "$TC" == "xcode9-macos10.13" ]]; then 
-        which glibtool
-        sudo ln "$(which glibtool)" "$(which libtool)"
+        echo "mac"
+        glibtoolize --version
+        libtoolize --version
+        echo "cam"
       fi
-
       git clone 'git://github.com/jedisct1/libsodium.git'
       cd libsodium
       ./autogen.sh
