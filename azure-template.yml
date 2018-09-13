@@ -14,8 +14,7 @@ jobs:
   - bash: |
       if [[ "$OS" == "xcode9-macos10.13" ]]; then 
         echo "mac"
-        glibtoolize --version
-        libtoolize --version
+        brew --version
         echo "cam"
       fi
       git clone 'git://github.com/jedisct1/libsodium.git'
