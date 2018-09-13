@@ -12,7 +12,7 @@ jobs:
     os: ${{ parameters.vmImage }}
   steps: 
   - bash: |
-      if [[ "$TC" == "xcode9-macos10.13" ]]; then 
+      if [[ "$OS" == "xcode9-macos10.13" ]]; then 
         echo "mac"
         glibtoolize --version
         libtoolize --version
@@ -23,7 +23,7 @@ jobs:
       ./autogen.sh
       ./configure && make
       sudo make install
-      if [[ "$TC" == "ubuntu-16.04" ]]; then sudo ldconfig; fi
+      if [[ "$OS" == "ubuntu-16.04" ]]; then sudo ldconfig; fi
 
   - bash: |
       curl -o rustup-init.sh https://sh.rustup.rs -sSf
