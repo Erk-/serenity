@@ -13,7 +13,8 @@ jobs:
   steps: 
   - bash: |
       if [[ "$OS" == "xcode9-macos10.13" ]]; then 
-        brew install libsodium --HEAD
+        HOMEBREW_NO_AUTO_UPDATE=1 sudo brew install libsodium --HEAD
+        sudo ldconfig
       else
         git clone 'git://github.com/jedisct1/libsodium.git'
         cd libsodium
