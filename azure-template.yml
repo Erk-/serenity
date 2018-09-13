@@ -9,7 +9,16 @@ jobs:
     vmImage: ${{ parameters.vmImage }}
   variables:
     tc: ${{ parameters.toolchain }}
+    os: ${{ parameters.vmImage }}
   steps: 
+    - bash: |
+      git clone git://github.com/jedisct1/libsodium.git
+      cd libsodium
+      ./autogen.sh
+      ./configure && make
+      sudo make install
+      if [[ "$TC" == "ubuntu-16.04" ]]; then sudo ldconfig; fi
+
   - bash: |
       curl -o rustup-init.sh https://sh.rustup.rs -sSf
       sh rustup-init.sh --default-toolchain $(tc) -y
@@ -18,11 +27,11 @@ jobs:
   - bash: |
       cd serenity
       source $HOME/.cargo/env
-      cargo build --release
+      cargo build --all-features
     displayName: 'Build serenity'
 
   - bash: |
       cd serenity
       source $HOME/.cargo/env
-      cargo test --release
-    displayName: 'Build serenity'
+      cargo test --all-features
+    displayName: 'Test serenity'
