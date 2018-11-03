@@ -14,6 +14,8 @@ use builder::{
 };
 #[cfg(all(feature = "cache", feature = "model"))]
 use CACHE;
+#[cfg(all(feature = "cache", feature = "model"))]
+use Cache;
 #[cfg(feature = "model")]
 use http::{self, AttachmentType};
 #[cfg(feature = "model")]
@@ -285,7 +287,24 @@ impl ChannelId {
 
     /// Search the cache for the channel with the Id.
     #[cfg(feature = "cache")]
-    pub fn find(&self) -> Option<Channel> { CACHE.read().channel(*self) }
+    #[deprecated(since = "0.5.8", note = "Use the `to_channel_cached`-method instead.")]
+    pub fn find(&self) -> Option<Channel> { self.to_channel_cached() }
+
+    /// Attempts to find a [`Channel`] by its Id in the cache.
+    ///
+    /// [`Channel`]: ../channel/enum.Channel.html
+    #[cfg(feature = "cache")]
+    #[inline]
+    pub fn to_channel_cached(self) -> Option<Channel> {
+        self._to_channel_cached(&CACHE)
+    }
+
+    /// To allow testing pass their own cache instead of using the globale one.
+    #[cfg(feature = "cache")]
+    #[inline]
+    pub(crate) fn _to_channel_cached(self, cache: &RwLock<Cache>) -> Option<Channel> {
+        cache.read().channel(self)
+    }
 
     /// Search the cache for the channel. If it can't be found, the channel is
     /// requested over REST.

@@ -6,7 +6,13 @@ use builder::EditRole;
 #[cfg(all(feature = "cache", feature = "model"))]
 use internal::prelude::*;
 #[cfg(all(feature = "cache", feature = "model"))]
-use {CACHE, http};
+use {CACHE, Cache, http};
+#[cfg(all(feature = "cache", feature = "model", feature = "utils"))]
+use std::str::FromStr;
+#[cfg(all(feature = "cache", feature = "model", feature = "utils"))]
+use model::misc::RoleParseError;
+#[cfg(all(feature = "cache", feature = "model", feature = "utils"))]
+use utils::parse_role;
 
 /// Information about a role within a guild. A role represents a set of
 /// permissions, and can be attached to one or multiple users. A role has
@@ -170,9 +176,20 @@ impl RoleId {
     /// Search the cache for the role.
     #[cfg(feature = "cache")]
     pub fn find(&self) -> Option<Role> {
-        let cache = CACHE.read();
+        self.to_role_cached()
+    }
 
-        for guild in cache.guilds.values() {
+    /// Tries to find the [`Role`] by its Id in the cache.
+    ///
+    /// [`Role`]: ../guild/struct.Role.html
+    #[cfg(feature = "cache")]
+    pub fn to_role_cached(self) -> Option<Role> {
+        self._to_role_cached(&CACHE)
+    }
+
+    #[cfg(feature = "cache")]
+    pub(crate) fn _to_role_cached(self, cache: &RwLock<Cache>) -> Option<Role> {
+        for guild in cache.read().guilds.values() {
             let guild = guild.read();
 
             if !guild.roles.contains_key(self) {
