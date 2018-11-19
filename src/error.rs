@@ -17,7 +17,7 @@ use reqwest::{Error as ReqwestError, header::InvalidHeaderValue};
 #[cfg(feature = "voice")]
 use opus::Error as OpusError;
 #[cfg(feature = "websocket")]
-use websocket::result::WebSocketError;
+use websocket::error::Error as WebSocketError;
 #[cfg(feature = "client")]
 use client::ClientError;
 #[cfg(feature = "gateway")]

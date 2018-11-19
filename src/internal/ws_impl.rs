@@ -3,9 +3,9 @@ use gateway::GatewayError;
 use internal::prelude::*;
 use serde_json;
 use websocket::{
-    message::OwnedMessage,
-    sync::stream::{TcpStream, TlsStream},
-    sync::Client as WsClient
+    Message,
+    protocol::WebSocket,
+    client::AutoStream,
 };
 
 pub trait ReceiverExt {
@@ -16,32 +16,32 @@ pub trait SenderExt {
     fn send_json(&mut self, value: &Value) -> Result<()>;
 }
 
-impl ReceiverExt for WsClient<TlsStream<TcpStream>> {
+impl ReceiverExt for WebSocket<AutoStream> {
     fn recv_json(&mut self) -> Result<Option<Value>> {
-        Ok(match self.recv_message()? {
-            OwnedMessage::Binary(bytes) => {
+        Ok(match self.read_message()? {
+            Message::Binary(bytes) => {
                 serde_json::from_reader(ZlibDecoder::new(&bytes[..])).map(Some)?
             },
-            OwnedMessage::Close(data) => return Err(Error::Gateway(GatewayError::Closed(data))),
-            OwnedMessage::Text(payload) => {
+            //Message::Close(data) => return Err(Error::Gateway(GatewayError::Closed(data))),
+            Message::Text(payload) => {
                 serde_json::from_str(&payload).map(Some)?
             },
-            OwnedMessage::Ping(x) => {
-                self.send_message(&OwnedMessage::Pong(x))
+            Message::Ping(x) => {
+                self.write_message(Message::Pong(x))
                     .map_err(Error::from)?;
 
                 None
             },
-            OwnedMessage::Pong(_) => None,
+            Message::Pong(_) => None,
         })
     }
 }
 
-impl SenderExt for WsClient<TlsStream<TcpStream>> {
+impl SenderExt for WebSocket<AutoStream> {
     fn send_json(&mut self, value: &Value) -> Result<()> {
         serde_json::to_string(value)
-            .map(OwnedMessage::Text)
+            .map(Message::Text)
             .map_err(Error::from)
-            .and_then(|m| self.send_message(&m).map_err(Error::from))
+            .and_then(|m| self.write_message(m).map_err(Error::from))
     }
 }

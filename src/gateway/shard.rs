@@ -20,11 +20,9 @@ use super::{
     WsClient,
     WebSocketGatewayClientExt,
 };
+use hyper::Url;
 use websocket::{
-    client::Url,
-    stream::sync::AsTcpStream,
-    sync::client::ClientBuilder,
-    WebSocketError
+    error::Error as WebSocketError,
 };
 
 /// A Shard is a higher-level handler for a websocket connection to Discord's
@@ -224,7 +222,7 @@ impl Shard {
             },
             Err(why) => {
                 match why {
-                    Error::WebSocket(WebSocketError::IoError(err)) => if err.raw_os_error() != Some(32) {
+                    Error::WebSocket(WebSocketError::Io(err)) => if err.raw_os_error() != Some(32) {
                         debug!("[Shard {:?}] Err heartbeating: {:?}",
                                self.shard_info,
                                err);
@@ -465,9 +463,9 @@ impl Shard {
                 Ok(Some(ShardAction::Reconnect(ReconnectType::Reidentify)))
             },
             Err(Error::Gateway(GatewayError::Closed(ref data))) => {
-                let num = data.as_ref().map(|d| d.status_code);
+                let num = data.as_ref().map(|d| d.code.into());
                 let clean = num == Some(1000);
-
+                
                 match num {
                     Some(close_codes::UNKNOWN_OPCODE) => {
                         warn!("[Shard {:?}] Sent invalid opcode",
@@ -543,11 +541,11 @@ impl Shard {
                 }))
             },
             Err(Error::WebSocket(ref why)) => {
-                if let WebSocketError::NoDataAvailable = *why {
-                    if self.heartbeat_instants.1.is_none() {
-                        return Ok(None);
-                    }
-                }
+                // if let WebSocketError::NoDataAvailable = *why {
+                //     if self.heartbeat_instants.1.is_none() {
+                //         return Ok(None);
+                //     }
+                // }
 
                 warn!("[Shard {:?}] Websocket error: {:?}",
                       self.shard_info,
@@ -836,14 +834,19 @@ impl Shard {
 }
 
 fn connect(base_url: &str) -> Result<WsClient> {
+    use websocket::client::connect as websocket_connect;
     let url = build_gateway_url(base_url)?;
-    let client = ClientBuilder::from_url(&url).connect_secure(None)?;
+    let (client, _) = websocket_connect(url)?;
 
     Ok(client)
 }
 
 fn set_client_timeout(client: &mut WsClient) -> Result<()> {
-    let stream = client.stream_ref().as_tcp();
+    use websocket::stream::Stream;
+    let stream = match client.get_mut() {
+        Stream::Plain(s) => s,
+        Stream::Tls(t) => t.get_mut(),
+    };
     stream.set_read_timeout(Some(StdDuration::from_millis(100)))?;
     stream.set_write_timeout(Some(StdDuration::from_secs(5)))?;
 
